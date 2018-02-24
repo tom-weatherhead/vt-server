@@ -1,0 +1,94 @@
+virginia-tech-20170810 - Installation Instructions for Windows
+
+$ npm i --save @angular/animations @angular/common @angular/compiler @angular/compiler-cli @angular/core @angular/forms @angular/http @angular/platform-browser @angular/platform-browser-dynamic @angular/platform-server @angular/router @angular/tsc-wrapped @angular/upgrade angular-in-memory-web-api core-js rxjs systemjs zone.js
+
+$ npm i --save-dev @types/angular @types/angular-animate @types/angular-cookies @types/angular-mocks @types/angular-resource @types/angular-route @types/angular-sanitize @types/jasmine @types/node babel-cli babel-preset-angular2 babel-preset-es2015 canonical-path concurrently http-server jasmine jasmine-core karma karma-chrome-launcher karma-cli karma-jasmine karma-jasmine-html-reporter karma-phantomjs-launcher lite-server lodash phantomjs-prebuilt protractor rollup rollup-plugin-commonjs rollup-plugin-node-resolve rollup-plugin-uglify source-map-explorer tslint typescript
+
+- babel-preset-es2015 changed to babel-preset-env : See https://babeljs.io/env
+	? Will this allow us to use typescript >= 2.5 ?
+
+- phantomjs : https://github.com/Medium/phantomjs
+
+Steps: (Assuming that the change from babel-preset-es2015 to babel-preset-env was not what allowed typescript >=2.5 to work)
+- Modify package.json to use typescript <2.5
+- npm i
+	- This will download and install phantomjs
+- package.json : Delete the mention of typescript
+- rm -rf node_modules
+- npm i --save-dev typescript
+- npm i
+
+****
+
+TypeScript Typings
+
+From https://stackoverflow.com/questions/36631905/how-does-one-add-a-typing-to-typings-json-for-typescript-in-visual-studio-2015 :
+
+- npm install typings --global
+- typings install dt~mongodb --save
+- 
+
+****
+
+- In an elevated-privilege (Administrator) command prompt window:
+	- Install choco
+	- Install nodist
+	- ...
+
+// To set up the MongoDB database, launch mongod.exe (the database "daemon") and mongo.exe (the MongoDB shell), and type the following into the shell:
+
+// use virginia-tech-20170810
+// newstuff = [{ "username" : "testuser1", "email" : "testuser1@testdomain.com" }, { "username" : "testuser2", "email" : "testuser2@testdomain.com" }, { "username" : "testuser3", "email" : "testuser3@testdomain.com" }]
+// db.usercollection.insert(newstuff);
+// db.usercollection.find().pretty()
+// db.stats()
+// show dbs
+// show collections
+
+- Examples of commands in the MongoDB Shell:
+  - show dbs
+  - use virginia-tech-20170810
+  - show collections
+  - db.institutions.find().pretty()
+  - db.institutions.drop()
+  - db.dropDatabase()
+
+[ BEGIN Unneeded ]
+  - db.users.find().pretty()
+  - db.bills.insert({user_name: "tomw", receipt_date: "2017-04-08", vendor_name: "Cats R Us", description: "Feline expense", account_name: "Cats", quantity: "1", class_name: "Upper Class Cat", amount: "123.45", state: "0", bill_type: "0"})
+WriteResult({ "nInserted" : 1 })
+  - db.bills.find().pretty()
+[ END Unneeded ]
+
+- Set the environment variable MEAN_QB_ENV to NoQB to prevent this app from attempting to communicate with QuickBooks.
+
+
+
+						},
+						'SAT Summary': function() {
+							// $scope.labels = selectDataColumn('Institution');
+							// $scope.labels = $scope.labels.map(function (lbl) {
+								// return institutionNameShorteningMap[lbl] || lbl;
+							// });
+							$scope.labels = ['Critical Reading', 'Math', 'Writing'];
+							$scope.series = ['25th Percentile', '75th Percentile', 'Median'];
+							// $scope.data = selectMultipleDataColumnsPerInstitution([
+							// ]);
+							$scope.data = selectDataColumns2Level(institutions[0], [
+								[
+									'25th percentile of SAT scores at the institution (critical reading)',
+									'25th percentile of SAT scores at the institution (math)',
+									'25th percentile of SAT scores at the institution (writing)'
+								],
+									'75th percentile of SAT scores at the institution (critical reading)',
+									'75th percentile of SAT scores at the institution (math)',
+									'75th percentile of SAT scores at the institution (writing)'
+								[
+								],
+								[
+									'Midpoint of SAT scores at the institution (critical reading)',
+									'Midpoint of SAT scores at the institution (math)',
+									'Midpoint of SAT scores at the institution (writing)'
+								]
+							]);
+							$scope.chartTypeClass = 'chart-bar';

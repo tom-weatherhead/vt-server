@@ -1,0 +1,5 @@
+﻿{
+	"databaseUrl": "mongodb://localhost:27017",
+	"databaseName": "vt",
+	"collectionName": "universities"
+}
