@@ -1,11 +1,16 @@
-﻿// thaw-tic-tac-toe-web-service/src/app.js
+﻿// vt-server/src/app.js
 
-// A Web server that makes the functionality in the Tic-Tac-Toe engine in thaw-tic-tac-toe-engine available as a Web service.
+// A MongoDB REST Web service.
 
 'use strict';
 
 const express = require('express');
+var cors = require('cors');
+
 const app = express();
+
+app.use(cors());
+//app.disable('etag');	// Prevent HTTP 304 Not Modified. See https://stackoverflow.com/questions/18811286/nodejs-express-cache-and-304-status-code
 
 const router = express.Router();				// eslint-disable-line new-cap
 
@@ -17,6 +22,27 @@ const MongoClient = require('mongodb').MongoClient;
 const url = config.databaseUrl;
 const dbName = config.databaseName;
 const collectionName = config.collectionName;
+
+/*
+function mapFixFloats(university) {
+	return {
+		id: parseInt(university.id),
+		name: university.name,
+		shortName: university.shortName,
+		numUndergraduateStudents: parseInt(university.numUndergraduateStudents),
+		percentWhite: parseFloat(university.percentWhite) * 100.0,
+		percentBlack: parseFloat(university.percentBlack) * 100.0,
+		percentHispanic: parseFloat(university.percentHispanic) * 100.0,
+		percentAsian: parseFloat(university.percentAsian) * 100.0,
+		percentAmericanNative: parseFloat(university.percentAmericanNative) * 100.0,
+		percentPacificIslander: parseFloat(university.percentPacificIslander) * 100.0,
+		percentMultipleRaces: parseFloat(university.percentMultipleRaces) * 100.0,
+		percentNonResidentAlien: parseFloat(university.percentNonResidentAlien) * 100.0,
+		percentUnknown: parseFloat(university.percentUnknown) * 100.0,
+		funk: 1
+	};
+}
+*/
 
 function findDocuments(db, collectionName) {
 	return new Promise((resolve, reject) => {
@@ -32,6 +58,7 @@ function findDocuments(db, collectionName) {
 
 			cursor.toArray().then(result => {
 				//console.log('collection.find().toArray() returned:', result);
+				//resolve(result.map(mapFixFloats));
 				resolve(result);
 			})
 			.catch(error2 => {
@@ -51,26 +78,18 @@ function findOneDocumentById(db, collectionName, id) {
 
 	return new Promise((resolve, reject) => {
 		const collection = db.collection(collectionName);
-		//let query = { id: id };
-		let query = { $expr: { $eq: [ "$id", id.toString() ] } };
+		let query = { id: id };
+		//let query = { $expr: { $eq: [ "$id", id ] } };
 
 		collection.findOne(query, function(error, result) {
-			//let result = cursor.toArray();		// result is a Promise.
 
 			if (error) {
 				reject(error);
 			}
 
 			console.log('collection.findOne() returned:', result);
+			//resolve(mapFixFloats(result));
 			resolve(result);
-			// cursor.toArray().then(result => {
-				// console.log('collection.find().toArray() returned:', result);
-				// resolve(result);
-			// })
-			// .catch(error2 => {
-				// console.error('collection.find().toArray() : Error caught:', error2);
-				// reject(error2);
-			// });
 		});
 	});
 }
@@ -82,7 +101,6 @@ function getAll() {
 			
 			if (error) {
 				console.error('Fatal: Connection error:', error);
-				//return;
 				reject(error);
 			}
 
@@ -113,7 +131,6 @@ function getOneDocumentById(id) {
 			
 			if (error) {
 				console.error('Fatal: Connection error:', error);
-				//return;
 				reject(error);
 			}
 
@@ -137,37 +154,15 @@ function getOneDocumentById(id) {
 	});
 }
 
-/*
-router.get('/:board([EXO]{9})/:maxPly([0-9]{1})', function (req, res) {
-	// Global replace in string: See https://stackoverflow.com/questions/38466499/how-to-replace-all-to-in-nodejs
-	const boardString = req.params.board.replace(/E/g, ' ');		// Replaces all 'E' with ' '.
-	const maxPly = parseInt(req.params.maxPly, 10);
-
-	try {
-		const result = gameEngine.findBestMove(boardString, maxPly);
-
-		res.json(result);
-	} catch (error) {
-		// For a description of the Node.js Error class, see https://nodejs.org/api/errors.html#errors_class_error
-		res.status(500).send(error.message);
-	}
-});
-*/
-
 router.get('/', function (req, res) {
-	// let resultString = 'All universities';
-	
-	// console.log(resultString);
-	// console.log(universities);
-
-	//res.json(universities);
+	console.log('Received request: GET /u/');
 
 	getAll()
 		.then(universities => {
 			res.json(universities);
 		})
 		.catch(error => {
-			console.error('Error caught:', error);
+			console.error('GET /u/ : Error caught:', error);
 			res.status(500).send(error.message || error);
 		});
 });
@@ -178,6 +173,8 @@ router.get('/:id', function (req, res) {
 	
 	console.log(resultString);
 	
+	console.log('Received request: GET /u/' + id.toString());
+
 	getOneDocumentById(id)
 		.then(university => {
 			console.log('university is', university);
@@ -187,12 +184,12 @@ router.get('/:id', function (req, res) {
 			} else {
 				let errorMessage = 'University with ID ' + id + ' not found.';
 
-				console.error(errorMessage);
+				console.error('GET /u/' + id.toString(), ': Error:', errorMessage);
 				res.status(404).send(errorMessage);
 			}
 		})
 		.catch(error => {
-			console.error('Error caught:', error);
+			console.error('GET /u/' + id.toString(), ': Error caught:', error);
 			res.status(500).send(error.message || error);
 		});
 });

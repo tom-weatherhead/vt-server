@@ -173,9 +173,20 @@ const getData = () => {
 								let camelCaseColumnName = mapCamelCaseColumnNames[keyNames[i]];
 								
 								if (camelCaseColumnName) {
-									rowObject[camelCaseColumnName] = row[i];
+									let value = row[i];
+
+									if (camelCaseColumnName === 'id' || camelCaseColumnName === 'numUndergraduateStudents') {
+										value = parseInt(value);
+									} else if (camelCaseColumnName.startsWith('percent')) {
+										value = Math.round(parseFloat(value) * 10000.0) / 100.0;
+									}
+
+									rowObject[camelCaseColumnName] = value;
 								}
 							}
+
+							// rowObject['percentUnknown'] = 100.0 - all of the other percentages?
+							// If so, then what if rowObject['percentUnknown'] < 0 ?
 
 							rowObject['shortName'] = mapNamesToShortNames[rowObject['name']];
 

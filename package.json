@@ -21,6 +21,7 @@
     "test": "grunt"
   },
   "dependencies": {
+    "cors": "^2.8.4",
     "csv-parse": "^2.0.0",
     "express": "^4.16.2",
     "mongodb": "^3.0.1",
