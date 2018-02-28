@@ -1,5 +1,6 @@
 ﻿{
 	"databaseUrl": "mongodb://localhost:27017",
 	"databaseName": "vt",
-	"collectionName": "universities"
+	"collectionName": "universities",
+	"serverListenPort": 3000
 }

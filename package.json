@@ -6,7 +6,7 @@
     "type": "git",
     "url": "git+https://github.com/tom-weatherhead/vt-server.git"
   },
-  "description": "Virginia Tech project: MongoDB / REST Web service",
+  "description": "Virginia Tech project - MongoDB / REST Web service",
   "main": "src/app.js",
   "homepage": "https://github.com/tom-weatherhead/vt-server#readme",
   "bugs": {
@@ -21,6 +21,7 @@
     "test": "grunt"
   },
   "dependencies": {
+    "body-parser": "^1.18.2",
     "cors": "^2.8.4",
     "csv-parse": "^2.0.0",
     "express": "^4.16.2",
@@ -28,7 +29,9 @@
     "nodemon": "^1.15.1"
   },
   "keywords": [
-    "MongoDB"
+    "Express.js",
+    "MongoDB",
+    "REST"
   ],
   "license": "MIT",
   "author": {

@@ -5,9 +5,13 @@
 'use strict';
 
 const express = require('express');
+var bodyParser = require('body-parser');
 var cors = require('cors');
 
 const app = express();
+
+// npm i --save body-parser
+app.use(bodyParser());
 
 app.use(cors());
 //app.disable('etag');	// Prevent HTTP 304 Not Modified. See https://stackoverflow.com/questions/18811286/nodejs-express-cache-and-304-status-code
@@ -154,6 +158,46 @@ function getOneDocumentById(id) {
 	});
 }
 
+// 1) Create (the C in CRUD)
+
+// See e.g. https://stackoverflow.com/questions/7172784/how-to-post-json-data-with-curl-from-terminal-commandline-to-test-spring-rest :
+
+// **** BEGIN stackoverflow.com excerpt ****
+
+// You need to set your content-type to application/json. But -d sends the Content-Type application/x-www-form-urlencoded, which is not accepted on Spring's side.
+
+// Looking at the curl man page, I think you can use -H:
+
+// -H "Content-Type: application/json"
+
+// Full example:
+
+// curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"xyz"}' http://localhost:3000/api/login
+
+// (-H is short for --header, -d for --data)
+
+// Note that -X POST is optional if you use -d, as the -d flag implies a POST request.
+
+// **** END stackoverflow.com excerpt ****
+
+// https://stackoverflow.com/questions/11625519/how-to-access-the-request-body-when-posting-using-node-js-and-express
+
+// Test via: curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"xyz"}' http://localhost:3000/u/
+
+router.post('/', function (req, res) {
+	console.log('Received request: POST /u/');
+	//console.log('Request is:', req);
+	console.log('Request.body is:', req.body);
+	//console.log('Request.body.username is:', req.body.username);
+	//console.log('typeof Request.body.username is:', typeof req.body.username);
+	// HTTP status code 201 means Created.
+	res.status(201).send('Successful POST test.');
+});
+
+// 2) Read (the R in CRUD)
+
+// Test via curl -X "GET" http://localhost:3000/u/ or simply curl http://localhost:3000/u/
+
 router.get('/', function (req, res) {
 	console.log('Received request: GET /u/');
 
@@ -166,6 +210,8 @@ router.get('/', function (req, res) {
 			res.status(500).send(error.message || error);
 		});
 });
+
+// Test via curl -X "GET" http://localhost:3000/u/1 or simply curl http://localhost:3000/u/1
 
 router.get('/:id', function (req, res) {
 	let id = parseInt(req.params.id);
@@ -192,6 +238,28 @@ router.get('/:id', function (req, res) {
 			console.error('GET /u/' + id.toString(), ': Error caught:', error);
 			res.status(500).send(error.message || error);
 		});
+});
+
+// 3) Update (the U in CRUD)
+
+// Test via: curl -X "PUT" http://localhost:3000/u/1
+
+router.put('/:id', function (req, res) {
+	let id = parseInt(req.params.id);
+
+	console.log('Received request: PUT /u/' + id.toString());
+	res.status(200).send('Successful PUT test.');
+});
+
+// 4) Delete (the D in CRUD)
+
+// Test via: curl -X "DELETE" http://localhost:3000/u/1
+
+router.delete('/:id', function (req, res) {
+	let id = parseInt(req.params.id);
+
+	console.log('Received request: DELETE /u/' + id.toString());
+	res.status(200).send('Successful DELETE test.');
 });
 
 app.use('/u', router);
