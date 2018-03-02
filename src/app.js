@@ -11,7 +11,7 @@ var cors = require('cors');
 const app = express();
 
 // npm i --save body-parser
-app.use(bodyParser());
+app.use(bodyParser.json());
 
 app.use(cors());
 //app.disable('etag');	// Prevent HTTP 304 Not Modified. See https://stackoverflow.com/questions/18811286/nodejs-express-cache-and-304-status-code
