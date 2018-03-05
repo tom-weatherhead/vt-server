@@ -229,36 +229,37 @@ router.post('/', function (req, res) {
 // Test via curl -X "GET" http://localhost:3000/u/ or simply curl http://localhost:3000/u/
 
 router.get('/', function (req, res) {
+	let client = null;
+
 	console.log('Received request: GET /u/');
 
-	MongoClient.connect(url, function(error, client) {
-		//assert.equal(null, error);
-		
-		if (error) {
-			console.error(`GET /u/ : Database connection error: ${error}`);
-			res.status(500).send(error.message || error);
-		}
+	MongoClient.connect(url)
+		.then(_client => {
+			console.log(`GET /u/ : Connected successfully to the server ${url}`);
 
-		console.log(`GET /u/ : Connected successfully to the server ${url}`);
+			client = _client;
 
-		const db = client.db(dbName);
-		const collection = db.collection(collectionName);
+			const db = client.db(dbName);
+			const collection = db.collection(collectionName);
 
-		// Use collection.find().toArray()
-		// See https://stackoverflow.com/questions/35246713/node-js-mongo-find-and-return-data
+			return collection.find().toArray();
+		})
+		.then(universities => {
+			console.log(`GET /u/ : Returning result: ${universities}`);
+			client.close();
+			res.json(universities);
+		})
+		.catch(error => {
 
-		collection.find().toArray()
-			.then(universities => {
+			if (client) {
 				client.close();
-				console.log(`GET /u/ : Returning result: ${universities}`);
-				res.json(universities);
-			})
-			.catch(error => {
-				client.close();
-				console.error(`GET /u/ : collection.find().toArray() error: ${error}`);
-				res.status(500).send(error.message || error);
-			});
-	});
+			}
+
+			const errorMessage = `GET /u/ : Error: ${error.message || error}`;
+
+			console.error(errorMessage);
+			res.status(500).send(errorMessage);
+		});
 });
 
 // Test via curl -X "GET" http://localhost:3000/u/1 or simply curl http://localhost:3000/u/1
