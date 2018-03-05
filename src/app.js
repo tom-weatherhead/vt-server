@@ -4,9 +4,11 @@
 
 'use strict';
 
+//const Rx = require('rxjs/Rx');
+
 const express = require('express');
-var bodyParser = require('body-parser');
-var cors = require('cors');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
 
@@ -27,78 +29,9 @@ const url = config.databaseUrl;
 const dbName = config.databaseName;
 const collectionName = config.collectionName;
 
-/*
-function mapFixFloats(university) {
-	return {
-		id: parseInt(university.id),
-		name: university.name,
-		shortName: university.shortName,
-		numUndergraduateStudents: parseInt(university.numUndergraduateStudents),
-		percentWhite: parseFloat(university.percentWhite) * 100.0,
-		percentBlack: parseFloat(university.percentBlack) * 100.0,
-		percentHispanic: parseFloat(university.percentHispanic) * 100.0,
-		percentAsian: parseFloat(university.percentAsian) * 100.0,
-		percentAmericanNative: parseFloat(university.percentAmericanNative) * 100.0,
-		percentPacificIslander: parseFloat(university.percentPacificIslander) * 100.0,
-		percentMultipleRaces: parseFloat(university.percentMultipleRaces) * 100.0,
-		percentNonResidentAlien: parseFloat(university.percentNonResidentAlien) * 100.0,
-		percentUnknown: parseFloat(university.percentUnknown) * 100.0,
-		funk: 1
-	};
-}
-*/
+// 1) Create
 
-function findDocuments(db, collectionName) {
-	return new Promise((resolve, reject) => {
-		const collection = db.collection(collectionName);
-		let query = {};
-
-		collection.find(query, function(error, cursor) {
-			//let result = cursor.toArray();		// result is a Promise.
-
-			if (error) {
-				reject(error);
-			}
-
-			cursor.toArray().then(result => {
-				//console.log('collection.find().toArray() returned:', result);
-				//resolve(result.map(mapFixFloats));
-				resolve(result);
-			})
-			.catch(error2 => {
-				console.error('collection.find().toArray() : Error caught:', error2);
-				reject(error2);
-			});
-		});
-	});
-}
-
-function findOneDocumentById(db, collectionName, id) {
-	// The insert command returns an object with the following fields:
-
-	// - result : Contains the result document from MongoDB
-	// - ops : Contains the documents inserted with added _id fields
-	// - connection : Contains the connection used to perform the insert
-
-	return new Promise((resolve, reject) => {
-		const collection = db.collection(collectionName);
-		let query = { id: id };
-		//let query = { $expr: { $eq: [ "$id", id ] } };
-
-		collection.findOne(query, function(error, result) {
-
-			if (error) {
-				reject(error);
-			}
-
-			console.log('collection.findOne() returned:', result);
-			//resolve(mapFixFloats(result));
-			resolve(result);
-		});
-	});
-}
-
-function getAll() {
+function insertOneDocument(university) {
 	return new Promise((resolve, reject) => {
 		MongoClient.connect(url, function(error, client) {
 			//assert.equal(null, error);
@@ -112,18 +45,40 @@ function getAll() {
 
 			const db = client.db(dbName);
 
-			findDocuments(db, collectionName)
-				.then(result => {
-					console.log('Success!');
-					//console.log('Result of find:', result);
-					client.close();
-					resolve(result);
-				})
-				.catch(error2 => {
-					console.error('Error caught:', error2);
-					client.close();
-					reject(error2);
-				});
+			const collection = db.collection(collectionName);
+			let query = { id: id };
+			//let query = { $expr: { $eq: [ "$id", id ] } };
+
+			collection.insertOne(university, function(error, result) {
+				client.close();
+
+				if (error) {
+					reject(error);
+				}
+
+				console.log('collection.insertOne() returned:', result);
+				resolve(result);
+			});
+		});
+	});
+}
+
+// 2) Read
+
+function findOneDocumentById(db, collectionName, id) {
+	return new Promise((resolve, reject) => {
+		const collection = db.collection(collectionName);
+		let query = { id: id };
+		//let query = { $expr: { $eq: [ "$id", id ] } };
+
+		collection.findOne(query, function(error, result) {
+
+			if (error) {
+				reject(error);
+			}
+
+			console.log('collection.findOne() returned:', result);
+			resolve(result);
 		});
 	});
 }
@@ -158,6 +113,73 @@ function getOneDocumentById(id) {
 	});
 }
 
+// 3) Update
+
+function updateOneDocumentById(id, university) {
+	return new Promise((resolve, reject) => {
+		MongoClient.connect(url, function(error, client) {
+			//assert.equal(null, error);
+			
+			if (error) {
+				console.error('Fatal: Connection error:', error);
+				reject(error);
+			}
+
+			console.log('Connected successfully to the server', url);
+
+			const db = client.db(dbName);
+
+			const collection = db.collection(collectionName);
+			let query = { id: id };
+			//let query = { $expr: { $eq: [ "$id", id ] } };
+
+			collection.updateOne(query, university, function(error, result) {
+				client.close();
+
+				if (error) {
+					reject(error);
+				}
+
+				console.log('collection.updateOne() returned:', result);
+				resolve(result);
+			});
+		});
+	});
+}
+
+// 4) Delete
+
+function deleteOneDocumentById(id) {
+	return new Promise((resolve, reject) => {
+		MongoClient.connect(url, function(error, client) {
+			//assert.equal(null, error);
+			
+			if (error) {
+				console.error('Fatal: Connection error:', error);
+				reject(error);
+			}
+
+			console.log('Connected successfully to the server', url);
+
+			const db = client.db(dbName);
+
+			const collection = db.collection(collectionName);
+			let query = { id: id };
+
+			collection.deleteOne(query, function(error, result) {
+				client.close();
+
+				if (error) {
+					reject(error);
+				}
+
+				console.log('collection.deleteOne() returned:', result);
+				resolve(result);
+			});
+		});
+	});
+}
+
 // 1) Create (the C in CRUD)
 
 // See e.g. https://stackoverflow.com/questions/7172784/how-to-post-json-data-with-curl-from-terminal-commandline-to-test-spring-rest :
@@ -187,11 +209,19 @@ function getOneDocumentById(id) {
 router.post('/', function (req, res) {
 	console.log('Received request: POST /u/');
 	//console.log('Request is:', req);
-	console.log('Request.body is:', req.body);
-	//console.log('Request.body.username is:', req.body.username);
-	//console.log('typeof Request.body.username is:', typeof req.body.username);
-	// HTTP status code 201 means Created.
-	res.status(201).send('Successful POST test.');
+	//console.log('Request.body is:', req.body);
+
+	const university = req.body;
+
+	insertOneDocument(university)
+		.then(_ => {
+			// HTTP status code 201 means Created.
+			res.status(201).send(`Successful POST of University ${university}`);
+		})
+		.catch(error => {
+			console.error(`POST /u/ : Error: ${error}`);
+			res.status(500).send(error.message || error);
+		});
 });
 
 // 2) Read (the R in CRUD)
@@ -201,25 +231,42 @@ router.post('/', function (req, res) {
 router.get('/', function (req, res) {
 	console.log('Received request: GET /u/');
 
-	getAll()
-		.then(universities => {
-			res.json(universities);
-		})
-		.catch(error => {
-			console.error('GET /u/ : Error caught:', error);
+	MongoClient.connect(url, function(error, client) {
+		//assert.equal(null, error);
+		
+		if (error) {
+			console.error(`GET /u/ : Database connection error: ${error}`);
 			res.status(500).send(error.message || error);
-		});
+		}
+
+		console.log(`GET /u/ : Connected successfully to the server ${url}`);
+
+		const db = client.db(dbName);
+		const collection = db.collection(collectionName);
+
+		// Use collection.find().toArray()
+		// See https://stackoverflow.com/questions/35246713/node-js-mongo-find-and-return-data
+
+		collection.find().toArray()
+			.then(universities => {
+				client.close();
+				console.log(`GET /u/ : Returning result: ${universities}`);
+				res.json(universities);
+			})
+			.catch(error => {
+				client.close();
+				console.error(`GET /u/ : collection.find().toArray() error: ${error}`);
+				res.status(500).send(error.message || error);
+			});
+	});
 });
 
 // Test via curl -X "GET" http://localhost:3000/u/1 or simply curl http://localhost:3000/u/1
 
 router.get('/:id', function (req, res) {
-	let id = parseInt(req.params.id);
-	let resultString = 'University number ' + id;
+	const id = parseInt(req.params.id);
 	
-	console.log(resultString);
-	
-	console.log('Received request: GET /u/' + id.toString());
+	console.log(`Received request: GET /u/${id}`);
 
 	getOneDocumentById(id)
 		.then(university => {
@@ -245,10 +292,20 @@ router.get('/:id', function (req, res) {
 // Test via: curl -X "PUT" http://localhost:3000/u/1
 
 router.put('/:id', function (req, res) {
-	let id = parseInt(req.params.id);
+	const id = parseInt(req.params.id);
 
-	console.log('Received request: PUT /u/' + id.toString());
-	res.status(200).send('Successful PUT test.');
+	console.log(`Received request: PUT /u/${id}`);
+
+	const university = req.body;
+
+	updateOneDocumentById(id, university)
+		.then(_ => {
+			res.status(200).send(`Successful PUT of University ${id}.`);
+		})
+		.catch(error => {
+			console.error(`PUT /u/${id} : Error: ${error}`);
+			res.status(500).send(error.message || error);
+		});
 });
 
 // 4) Delete (the D in CRUD)
@@ -256,10 +313,18 @@ router.put('/:id', function (req, res) {
 // Test via: curl -X "DELETE" http://localhost:3000/u/1
 
 router.delete('/:id', function (req, res) {
-	let id = parseInt(req.params.id);
+	const id = parseInt(req.params.id);
 
-	console.log('Received request: DELETE /u/' + id.toString());
-	res.status(200).send('Successful DELETE test.');
+	console.log(`Received request: DELETE /u/${id}`);
+
+	deleteOneDocumentById(id)
+		.then(_ => {
+			res.status(200).send(`Successful DELETE of University ${id}.`);
+		})
+		.catch(error => {
+			console.error(`DELETE /u/${id} : Error: ${error}`);
+			res.status(500).send(error.message || error);
+		});
 });
 
 app.use('/u', router);
