@@ -4,15 +4,12 @@
 
 'use strict';
 
-//const Rx = require('rxjs/Rx');
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
 
-// npm i --save body-parser
 app.use(bodyParser.json());
 
 app.use(cors());
@@ -28,157 +25,6 @@ const MongoClient = require('mongodb').MongoClient;
 const url = config.databaseUrl;
 const dbName = config.databaseName;
 const collectionName = config.collectionName;
-
-// 1) Create
-
-function insertOneDocument(university) {
-	return new Promise((resolve, reject) => {
-		MongoClient.connect(url, function(error, client) {
-			//assert.equal(null, error);
-			
-			if (error) {
-				console.error('Fatal: Connection error:', error);
-				reject(error);
-			}
-
-			console.log('Connected successfully to the server', url);
-
-			const db = client.db(dbName);
-
-			const collection = db.collection(collectionName);
-			let query = { id: id };
-			//let query = { $expr: { $eq: [ "$id", id ] } };
-
-			collection.insertOne(university, function(error, result) {
-				client.close();
-
-				if (error) {
-					reject(error);
-				}
-
-				console.log('collection.insertOne() returned:', result);
-				resolve(result);
-			});
-		});
-	});
-}
-
-// 2) Read
-
-function findOneDocumentById(db, collectionName, id) {
-	return new Promise((resolve, reject) => {
-		const collection = db.collection(collectionName);
-		let query = { id: id };
-		//let query = { $expr: { $eq: [ "$id", id ] } };
-
-		collection.findOne(query, function(error, result) {
-
-			if (error) {
-				reject(error);
-			}
-
-			console.log('collection.findOne() returned:', result);
-			resolve(result);
-		});
-	});
-}
-
-function getOneDocumentById(id) {
-	return new Promise((resolve, reject) => {
-		MongoClient.connect(url, function(error, client) {
-			//assert.equal(null, error);
-			
-			if (error) {
-				console.error('Fatal: Connection error:', error);
-				reject(error);
-			}
-
-			console.log('Connected successfully to the server', url);
-
-			const db = client.db(dbName);
-
-			findOneDocumentById(db, collectionName, id)
-				.then(result => {
-					console.log('Success!');
-					//console.log('Result of find:', result);
-					client.close();
-					resolve(result);
-				})
-				.catch(error2 => {
-					console.error('Error caught:', error2);
-					client.close();
-					reject(error2);
-				});
-		});
-	});
-}
-
-// 3) Update
-
-function updateOneDocumentById(id, university) {
-	return new Promise((resolve, reject) => {
-		MongoClient.connect(url, function(error, client) {
-			//assert.equal(null, error);
-			
-			if (error) {
-				console.error('Fatal: Connection error:', error);
-				reject(error);
-			}
-
-			console.log('Connected successfully to the server', url);
-
-			const db = client.db(dbName);
-
-			const collection = db.collection(collectionName);
-			let query = { id: id };
-			//let query = { $expr: { $eq: [ "$id", id ] } };
-
-			collection.updateOne(query, university, function(error, result) {
-				client.close();
-
-				if (error) {
-					reject(error);
-				}
-
-				console.log('collection.updateOne() returned:', result);
-				resolve(result);
-			});
-		});
-	});
-}
-
-// 4) Delete
-
-function deleteOneDocumentById(id) {
-	return new Promise((resolve, reject) => {
-		MongoClient.connect(url, function(error, client) {
-			//assert.equal(null, error);
-			
-			if (error) {
-				console.error('Fatal: Connection error:', error);
-				reject(error);
-			}
-
-			console.log('Connected successfully to the server', url);
-
-			const db = client.db(dbName);
-
-			const collection = db.collection(collectionName);
-			let query = { id: id };
-
-			collection.deleteOne(query, function(error, result) {
-				client.close();
-
-				if (error) {
-					reject(error);
-				}
-
-				console.log('collection.deleteOne() returned:', result);
-				resolve(result);
-			});
-		});
-	});
-}
 
 // 1) Create (the C in CRUD)
 
@@ -206,21 +52,43 @@ function deleteOneDocumentById(id) {
 
 // Test via: curl -H "Content-Type: application/json" -X POST -d '{"username":"xyz","password":"xyz"}' http://localhost:3000/u/
 
+// Test via: curl -H "Content-Type: application/json" -X POST -d '{"id":1,"name":"North Carolina State University at Raleigh","numUndergraduateStudents":22925,"percentWhite":74.67,"percentBlack":6.5,"percentHispanic":4.47,"percentAsian":5.37,"percentAmericanNative":0.42,"percentPacificIslander":0.06,"percentMultipleRaces":3.51,"percentNonResidentAlien":3.27,"percentUnknown":1.72,"shortName":"NCSU Raleigh"}' http://localhost:3000/u/
+
 router.post('/', function (req, res) {
-	console.log('Received request: POST /u/');
-	//console.log('Request is:', req);
-	//console.log('Request.body is:', req.body);
-
 	const university = req.body;
+	let client = null;
 
-	insertOneDocument(university)
+	console.log('Received request: POST /u/');
+
+	MongoClient.connect(url)
+		.then(_client => {
+			console.log(`POST /u/ : Connected successfully to the server ${url}`);
+
+			client = _client;
+
+			const db = client.db(dbName);
+			const collection = db.collection(collectionName);
+
+			return collection.insertOne(university);
+		})
 		.then(_ => {
+			const message = 'POST /u/ : Completed.';
+
+			console.log(message);
+			client.close();
 			// HTTP status code 201 means Created.
-			res.status(201).send(`Successful POST of University ${university}`);
+			res.status(201).send(message);
 		})
 		.catch(error => {
-			console.error(`POST /u/ : Error: ${error}`);
-			res.status(500).send(error.message || error);
+
+			if (client) {
+				client.close();
+			}
+
+			const errorMessage = `POST /u/ : Error: ${error.message || error}`;
+
+			console.error(errorMessage);
+			res.status(500).send(errorMessage);
 		});
 });
 
@@ -266,46 +134,138 @@ router.get('/', function (req, res) {
 
 router.get('/:id', function (req, res) {
 	const id = parseInt(req.params.id);
-	
+	let client = null;
+
 	console.log(`Received request: GET /u/${id}`);
 
-	getOneDocumentById(id)
+	MongoClient.connect(url)
+		.then(_client => {
+			console.log(`GET /u/${id} : Connected successfully to the server ${url}`);
+
+			client = _client;
+
+			const db = client.db(dbName);
+			const collection = db.collection(collectionName);
+			const query = { id: id };
+
+			return collection.findOne(query);
+		})
 		.then(university => {
-			console.log('university is', university);
-			
+			console.log(`GET /u/${id} : Returning result: ${university}`);
+
+			client.close();
+
 			if (university) {
 				res.json(university);
 			} else {
-				let errorMessage = 'University with ID ' + id + ' not found.';
+				const errorMessage = `GET /u/${id} : A university with ID ${id} was not found.`;
 
-				console.error('GET /u/' + id.toString(), ': Error:', errorMessage);
+				console.error(errorMessage);
 				res.status(404).send(errorMessage);
 			}
 		})
 		.catch(error => {
-			console.error('GET /u/' + id.toString(), ': Error caught:', error);
-			res.status(500).send(error.message || error);
+
+			if (client) {
+				client.close();
+			}
+
+			const errorMessage = `GET /u/${id} : Error: ${error.message || error}`;
+
+			console.error(errorMessage);
+			res.status(500).send(errorMessage);
 		});
 });
 
 // 3) Update (the U in CRUD)
 
-// Test via: curl -X "PUT" http://localhost:3000/u/1
+// Test via: curl -H "Content-Type: application/json" -X PUT -d '{"id":1,"name":"Buckwheat University","numUndergraduateStudents":22925,"percentWhite":74.67,"percentBlack":6.5,"percentHispanic":4.47,"percentAsian":5.37,"percentAmericanNative":0.42,"percentPacificIslander":0.06,"percentMultipleRaces":3.51,"percentNonResidentAlien":3.27,"percentUnknown":1.72,"shortName":"NCSU Raleigh"}' http://localhost:3000/u/1
 
 router.put('/:id', function (req, res) {
 	const id = parseInt(req.params.id);
+	const university = req.body;
+	let client = null;
 
 	console.log(`Received request: PUT /u/${id}`);
 
-	const university = req.body;
+	MongoClient.connect(url)
+		.then(_client => {
+			console.log(`PUT /u/${id} : Connected successfully to the server ${url}`);
 
-	updateOneDocumentById(id, university)
+			client = _client;
+
+			const db = client.db(dbName);
+			const collection = db.collection(collectionName);
+			const filter = { id: id };
+
+			// See @dyouberg at https://stackoverflow.com/questions/38883285/error-the-update-operation-document-must-contain-atomic-operators-when-running
+			// See https://docs.mongodb.com/manual/reference/method/db.collection.replaceOne/
+			return collection.replaceOne(filter, university);
+		})
 		.then(_ => {
-			res.status(200).send(`Successful PUT of University ${id}.`);
+			console.log(`PUT /u/${id} : Completed.`);
+			client.close();
+			res.status(200).send(`Successful PUT of University ${university} to /u/${id}`);
 		})
 		.catch(error => {
-			console.error(`PUT /u/${id} : Error: ${error}`);
-			res.status(500).send(error.message || error);
+
+			if (client) {
+				client.close();
+			}
+
+			const errorMessage = `PUT /u/${id} : Error: ${error.message || error}`;
+
+			console.error(errorMessage);
+			res.status(500).send(errorMessage);
+		});
+});
+
+// See https://docs.mongodb.com/manual/reference/method/db.collection.updateOne/
+// See https://stackoverflow.com/questions/38883285/error-the-update-operation-document-must-contain-atomic-operators-when-running
+
+// Just pass in the changed fields, not necessarily the entire object.
+
+// Test via: curl -H "Content-Type: application/json" -X PATCH -d '{"name": "Bar University"}' http://localhost:3000/u/2
+
+router.patch('/:id', function (req, res) {
+	const id = parseInt(req.params.id);
+	const changes = req.body;
+	let client = null;
+
+	console.log(`Received request: PATCH /u/${id}`);
+
+	MongoClient.connect(url)
+		.then(_client => {
+			console.log(`PATCH /u/${id} : Connected successfully to the server ${url}`);
+
+			client = _client;
+
+			const db = client.db(dbName);
+			const collection = db.collection(collectionName);
+			const filter = { id: id };
+			const update = { $set: changes };
+			const upsert = false;	// See https://stackoverflow.com/questions/19974216/is-there-an-upsert-option-in-the-mongodb-insert-command
+			const options = { upsert: upsert };
+
+			return collection.updateOne(filter, update, options);
+		})
+		.then(_ => {
+			const message = `PATCH /u/${id} : Completed.`;
+
+			console.log(message);
+			client.close();
+			res.status(200).send(message);
+		})
+		.catch(error => {
+
+			if (client) {
+				client.close();
+			}
+
+			const errorMessage = `PATCH /u/${id} : Error: ${error.message || error}`;
+
+			console.error(errorMessage);
+			res.status(500).send(errorMessage);
 		});
 });
 
@@ -315,16 +275,39 @@ router.put('/:id', function (req, res) {
 
 router.delete('/:id', function (req, res) {
 	const id = parseInt(req.params.id);
+	let client = null;
 
 	console.log(`Received request: DELETE /u/${id}`);
 
-	deleteOneDocumentById(id)
+	MongoClient.connect(url)
+		.then(_client => {
+			console.log(`DELETE /u/${id} : Connected successfully to the server ${url}`);
+
+			client = _client;
+
+			const db = client.db(dbName);
+			const collection = db.collection(collectionName);
+			const filter = { id: id };
+
+			return collection.deleteOne(filter);
+		})
 		.then(_ => {
-			res.status(200).send(`Successful DELETE of University ${id}.`);
+			const message = `DELETE /u/${id} : Completed.`;
+
+			console.log(message);
+			client.close();
+			res.status(200).send(message);
 		})
 		.catch(error => {
-			console.error(`DELETE /u/${id} : Error: ${error}`);
-			res.status(500).send(error.message || error);
+
+			if (client) {
+				client.close();
+			}
+
+			const errorMessage = `DELETE /u/${id} : Error: ${error.message || error}`;
+
+			console.error(errorMessage);
+			res.status(500).send(errorMessage);
 		});
 });
 
