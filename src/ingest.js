@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // src/ingest.js
 
 'use strict';
@@ -224,26 +222,25 @@ const insertDocuments = (db, collectionName, records) => {
 	});
 }
 
-const MongoClient = require('mongodb').MongoClient;
-// const assert = require('assert');
+function ingest() {
+	const MongoClient = require('mongodb').MongoClient;
 
-const url = config.databaseUrl;
-const dbName = config.databaseName;
-const collectionName = config.collectionName;
+	const url = config.databaseUrl;
+	const dbName = config.databaseName;
+	const collectionName = config.collectionName;
 
-MongoClient.connect(url, function(error, client) {
-	//assert.equal(null, error);
-	
-	if (error) {
-		console.error('Fatal: Connection error:', error);
-		return;
-	}
+	let client = null;
+	let db = null;
 
-	console.log('Connected successfully to the server', url);
+	return MongoClient.connect(url)
+		.then(_client => {
+			console.log('Connected successfully to the server', url);
 
-	const db = client.db(dbName);
+			client = _client;
+			db = client.db(dbName);
 
-	safelyDropCollection(db, collectionName)
+			return safelyDropCollection(db, collectionName);
+		})
 		.then(result => {
 			return getData();
 		})
@@ -254,9 +251,19 @@ MongoClient.connect(url, function(error, client) {
 			console.log('Success!');
 			//console.log('Result of insert:', result);
 			client.close();
+			return Promise.resolve(result);
 		})
 		.catch(error => {
 			console.error('Error caught:', error);
-			client.close();
+
+			if (client) {
+				client.close();
+			}
+
+			return Promise.reject(error);
 		});
-});
+}
+
+module.exports = ingest;
+
+// End of File.

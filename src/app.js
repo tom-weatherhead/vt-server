@@ -8,6 +8,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+const ingest = require('./ingest');
+
 const app = express();
 
 app.use(bodyParser.json());
@@ -25,6 +27,23 @@ const MongoClient = require('mongodb').MongoClient;
 const url = config.databaseUrl;
 const dbName = config.databaseName;
 const collectionName = config.collectionName;
+
+
+router.post('/ingest', function (req, res) {
+	ingest()
+		.then(_ => {
+			const message = 'POST /u/ingest : Completed.';
+
+			console.log(message);
+			res.status(200).send(message);
+		})
+		.catch(error => {
+			const errorMessage = `POST /u/ingest : Error: ${error.message || error}`;
+
+			console.error(errorMessage);
+			res.status(500).send(errorMessage);
+		});
+});
 
 // 1) Create (the C in CRUD)
 
