@@ -115,7 +115,11 @@ router.post('/', function (req, res) {
 
 // Test via curl -X "GET" http://localhost:3000/u/ or simply curl http://localhost:3000/u/
 
+// ? To get the value of a URL parameter (e.g. ".../?name=foo"), refer to req.query.name (which should equal 'foo').
+// See https://stackoverflow.com/questions/17007997/how-to-access-the-get-parameters-after-in-express
+
 router.get('/', function (req, res) {
+	let searchString = req.query.name;
 	let client = null;
 
 	console.log('Received request: GET /u/');
@@ -132,6 +136,12 @@ router.get('/', function (req, res) {
 			return collection.find().toArray();
 		})
 		.then(universities => {
+			
+			if (searchString) {
+				searchString = searchString.toLowerCase();
+				universities = universities.filter(university => university.name.toLowerCase().indexOf(searchString) >= 0);
+			}
+
 			console.log(`GET /u/ : Returning result: ${universities}`);
 			client.close();
 			res.json(universities);
