@@ -74,7 +74,7 @@ router.post('/ingest', function (req, res) {
 // Test via: curl -H "Content-Type: application/json" -X POST -d '{"id":1,"name":"North Carolina State University at Raleigh","numUndergraduateStudents":22925,"percentWhite":74.67,"percentBlack":6.5,"percentHispanic":4.47,"percentAsian":5.37,"percentAmericanNative":0.42,"percentPacificIslander":0.06,"percentMultipleRaces":3.51,"percentNonResidentAlien":3.27,"percentUnknown":1.72,"shortName":"NCSU Raleigh"}' http://localhost:3000/u/
 
 router.post('/', function (req, res) {
-	const university = req.body;
+	let university = req.body;
 	let client = null;
 
 	console.log('Received request: POST /u/');
@@ -90,13 +90,22 @@ router.post('/', function (req, res) {
 
 			return collection.insertOne(university);
 		})
-		.then(_ => {
-			const message = 'POST /u/ : Completed.';
+		.then(result => {
+			// const message = 'POST /u/ : Completed.';
 
-			console.log(message);
+			console.log('POST /u/ : Completed.');
+			// console.log('result:', result);
+			// console.log('result.insertedId:', result.insertedId);
 			client.close();
 			// HTTP status code 201 means Created.
-			res.status(201).send(message);
+			// res.status(201).send(message);
+			// res.status(201).send({ "insertedId": result.insertedId });
+
+			// result.ops[0] should be the same as university.
+			console.log('university before setting _id:', university);
+			// university._id = result.insertedId;
+			// console.log('university:', university);
+			res.status(201).send(university);
 		})
 		.catch(error => {
 
