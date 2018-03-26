@@ -1,0 +1,27 @@
+# Node.js app as an Ubuntu service: See https://gist.github.com/learncodeacademy/3a96aa1226c769adba39
+# See also https://hackernoon.com/making-node-js-service-always-alive-on-ubuntu-server-e20c9c0808e4
+
+# Make a link in /etc/systemd/system/ (via ln -sf) that points to /var/www/apps/vt-server/service/vt-server.service , then fix the link's SELinux attributes with chcon, then run:
+# $ sudo systemctl daemon-reload
+# $ sudo systemctl enable vt-server.service
+# $ sudo systemctl start vt-server.service
+
+[Unit]
+Description=VT Server
+# Wants=mongodb.service
+# After=mongodb.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+# Restart=always
+User=tomw
+# Group=groupname
+# PIDFile=/var/www/apps/vt-server/shared/tmp/pids/vt-server.pid
+WorkingDirectory=/var/www/apps/vt-server
+SyslogIdentifier=vt-server
+# ExecStart=/bin/bash -lc '/usr/bin/env node /var/www/apps/vt-server/src/server.js'
+ExecStart=/usr/bin/env node /var/www/apps/vt-server/src/server.js
+
+[Install]
+WantedBy=multi-user.target
