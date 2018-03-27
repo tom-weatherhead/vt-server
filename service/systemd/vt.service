@@ -1,0 +1,89 @@
+# vt.service
+
+# Caveat: Replace all occurrences of the placeholders <username> and <groupname> with valid values.
+
+# Node.js app as an Ubuntu service: See https://gist.github.com/learncodeacademy/3a96aa1226c769adba39
+# See also https://hackernoon.com/making-node-js-service-always-alive-on-ubuntu-server-e20c9c0808e4
+
+# Install Node.js system-wide:
+# From http://www.marcominetti.net/personal/blog/2015/09/install-system-wide-node-js-with-nvm-the-painless-way :
+
+# $ sudo -i
+
+# Fetch and execute nvm setup script:
+# (Consult the nvm homepage at https://github.com/creationix/nvm to determine the current version of nvm, then substitute the version number in the curl URL below.)
+
+# # curl https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | NVM_DIR=/usr/local/nvm PROFILE=/etc/bash.bashrc bash
+
+# Close the terminal window, then open a new one.
+
+# $ sudo -i
+
+# # nvm install node
+
+# Create node executable:
+
+# # echo "#\!/bin/bash
+#	export NVM_DIR=\"/usr/local/nvm\"
+#	[ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
+#	node \$@" > /usr/local/bin/node
+
+# # chmod +x /usr/local/bin/node
+
+# Create npm executable:
+
+# echo "#\!/bin/bash
+#	export NVM_DIR=\"/usr/local/nvm\"
+#	[ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
+#	npm \$@" > /usr/local/bin/npm
+
+# # chmod +x /usr/local/bin/npm
+
+# # mkdir -p /var/www/apps/vt-server
+# # chown -R <username>:<groupname> /var/www/apps/vt-server
+# # su - <username>
+# $ git clone https://github.com/tom-weatherhead/vt-server.git /var/www/apps/vt-server
+# $ cd /var/www/apps/vt-server
+# $ npm i
+# $ exit
+
+# # cd /etc/systemd/system
+# # cp /var/www/apps/vt-server/service/vt.service .
+# # chmod -x vt.service
+# # systemctl daemon-reload
+# # systemctl enable vt
+# # systemctl start vt
+# # systemctl status vt
+# # exit
+
+# Use the service to populate the MongoDB database:
+
+# $ curl -X POST http://localhost:3000/u/ingest
+
+# Test the service:
+
+# $ curl http://localhost:3000/u/
+# $ curl http://localhost:3000/u/1
+
+# From https://hackernoon.com/making-node-js-service-always-alive-on-ubuntu-server-e20c9c0808e4 :
+
+# To view the service's logs:
+# sudo journalctl -u vt.service
+
+# For real time logs, just add the -f argument:
+# sudo journalctl -fu vt.service
+
+###
+
+[Unit]
+Description=Virginia Tech Project REST API Service
+Wants=mongodb.service
+After=mongodb.service
+
+[Service]
+ExecStart=/bin/bash -c 'node /var/www/apps/vt-server/src/server.js'
+Restart=always
+User=<username>
+
+[Install]
+WantedBy=multi-user.target
