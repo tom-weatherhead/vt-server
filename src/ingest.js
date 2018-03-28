@@ -4,6 +4,7 @@
 
 var csv_parse = require('csv-parse');
 var fs = require('fs');
+var path = require('path');
 
 const config = require('../config/config');
 
@@ -32,7 +33,16 @@ const safelyDropCollection = (db, collectionName) => {
 
 const getData = () => {
 	return new Promise((resolve, reject) => {
-		const srcFilePath = './data/Dataset_presentation.csv';
+		// TODO: Generate and use an absolute path to the .csv file.
+		// E.g. Use the npm package app-root-path:
+		// See https://www.npmjs.com/package/app-root-path
+
+		var appRoot = require('app-root-path');
+
+		console.log('app-root-path: appRoot is', appRoot);
+
+		//const srcFilePath = './data/Dataset_presentation.csv';
+		const srcFilePath = path.join(appRoot.path, 'data/Dataset_presentation.csv');
 
 		// Re: 'utf8' : See https://stackoverflow.com/questions/6456864/why-does-node-js-fs-readfile-return-a-buffer-instead-of-string
 		fs.readFile(srcFilePath, 'utf8', function (errorReadFile, fileContents) {
