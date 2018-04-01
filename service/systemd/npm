@@ -1,0 +1,5 @@
+#!/bin/bash
+# Copy this file to /usr/local/bin/npm , then make it executable.
+export NVM_DIR="/usr/local/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+npm $@
